@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eraser, Wand2, Download, Sparkles, Loader2, Upload, Bot, Zap, BrainCircuit, RotateCcw } from 'lucide-react';
+import { Eraser, Wand2, Download, Sparkles, Loader2, Upload, Bot, Zap, BrainCircuit, RotateCcw, Eye, EyeOff, Check } from 'lucide-react';
 import { AppState } from '../types';
 
 interface ToolbarProps {
@@ -8,9 +8,11 @@ interface ToolbarProps {
   onAiRemove: () => void;
   onDownload: () => void;
   onUndo: () => void;
+  onManualApply: () => void;
   onBrushSizeChange: (size: number) => void;
   onToleranceChange: (val: number) => void;
   onSmoothingChange: (val: number) => void;
+  onManualMaskPreviewChange: (val: boolean) => void;
   onUploadClick: () => void;
 }
 
@@ -20,9 +22,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onAiRemove,
   onDownload,
   onUndo,
+  onManualApply,
   onBrushSizeChange,
   onToleranceChange,
   onSmoothingChange,
+  onManualMaskPreviewChange,
   onUploadClick
 }) => {
   const [activeTab, setActiveTab] = useState<'ALGO' | 'AI'>('ALGO');
@@ -166,28 +170,61 @@ const Toolbar: React.FC<ToolbarProps> = ({
             </button>
         </div>
         
-        <div className="bg-gray-700/50 p-3 rounded-lg border border-gray-600">
-          <p className="text-[10px] text-gray-400 mb-3">Click and drag on the right image to erase parts manually.</p>
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs text-gray-400">
-                <span>Eraser Size</span>
-                <span>{state.brushSize}px</span>
-            </div>
-            <input
-                type="range"
-                min="5"
-                max="100"
-                value={state.brushSize}
-                onChange={(e) => onBrushSizeChange(Number(e.target.value))}
-                className="w-full h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-pink-500"
-            />
-            {/* Visual indicator of brush size */}
-            <div className="flex justify-center pt-2 h-8 items-center">
+        <div className="bg-gray-700/50 p-3 rounded-lg border border-gray-600 space-y-4">
+          <p className="text-[10px] text-gray-400 mb-2">Mark areas to remove with the red brush.</p>
+          
+          {/* Brush Size Control */}
+          <div className="flex items-center gap-4">
+             <div className="flex-1 space-y-1">
+                 <div className="flex justify-between text-xs text-gray-400">
+                    <span>Size</span>
+                    <span>{state.brushSize}px</span>
+                </div>
+                <input
+                    type="range"
+                    min="5"
+                    max="100"
+                    value={state.brushSize}
+                    onChange={(e) => onBrushSizeChange(Number(e.target.value))}
+                    className="w-full h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                />
+             </div>
+             
+             {/* Visual Indicator on the Right */}
+             <div className="w-12 h-12 flex-shrink-0 bg-gray-800 rounded-lg border border-gray-600 flex items-center justify-center overflow-hidden relative">
                  <div 
-                    className="rounded-full bg-pink-500/50 border border-pink-500"
-                    style={{ width: state.brushSize / 2.5, height: state.brushSize / 2.5 }}
+                    className="rounded-full bg-pink-500"
+                    style={{ 
+                        width: Math.min(state.brushSize, 40), 
+                        height: Math.min(state.brushSize, 40),
+                        // Visual scaling for very large brushes to fit icon box
+                        transform: state.brushSize > 40 ? `scale(${state.brushSize / 40})` : 'scale(1)'
+                    }}
                  ></div>
-            </div>
+             </div>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="grid grid-cols-2 gap-2 pt-2">
+             <button
+                onClick={() => onManualMaskPreviewChange(!state.manualMaskPreview)}
+                className={`flex items-center justify-center gap-2 py-2 px-2 rounded-md text-xs font-medium transition-all border ${
+                    state.manualMaskPreview
+                    ? 'bg-pink-900/40 border-pink-500/50 text-pink-200'
+                    : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                }`}
+             >
+                {state.manualMaskPreview ? <Eye size={14} /> : <EyeOff size={14} />}
+                {state.manualMaskPreview ? 'View Result' : 'View Mask'}
+             </button>
+
+             <button
+                onClick={onManualApply}
+                className="flex items-center justify-center gap-2 py-2 px-2 rounded-md text-xs font-medium bg-pink-600 hover:bg-pink-700 text-white transition-all shadow-lg"
+             >
+                <Check size={14} />
+                Apply
+             </button>
           </div>
         </div>
       </div>
@@ -195,15 +232,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
       <div className="mt-auto border-t border-gray-700 pt-6">
         <div className="mb-4">
             <p className="text-xs font-mono text-gray-400 mb-1">Filename:</p>
-            {state.isAnalysing ? (
-                <div className="flex items-center gap-2 text-xs text-yellow-400 animate-pulse">
-                    <Sparkles size={12} /> Gemini is analyzing...
-                </div>
-            ) : (
-                <div className="bg-gray-900 px-3 py-2 rounded text-sm text-green-400 font-mono truncate border border-gray-700">
-                    {state.fileName || 'image'}.png
-                </div>
-            )}
+            <div className="bg-gray-900 px-3 py-2 rounded text-sm text-green-400 font-mono truncate border border-gray-700">
+                {state.fileName || 'image'}.png
+            </div>
         </div>
         <button
           onClick={onDownload}

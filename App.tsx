@@ -3,23 +3,23 @@ import { Upload, Image as ImageIcon, Sparkles } from 'lucide-react';
 import Toolbar from './components/Toolbar';
 import ImageWorkspace from './components/ImageWorkspace';
 import { AppState } from './types';
-import { analyzeImageForNaming, removeBackgroundWithAi } from './services/geminiService';
+import { removeBackgroundWithAi } from './services/geminiService';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
     originalImage: null,
     processedImage: null,
-    fileName: 'processed_image',
+    fileName: 'rbr-photo',
     isProcessing: false,
     brushSize: 30,
     tolerance: 15,
     smoothing: 0,
-    aiSuggestedName: null,
-    isAnalysing: false,
+    manualMaskPreview: false,
   });
 
   const [triggerAutoRemove, setTriggerAutoRemove] = useState(0);
   const [triggerUndo, setTriggerUndo] = useState(0);
+  const [triggerManualApply, setTriggerManualApply] = useState(0);
   const [processedImageOverride, setProcessedImageOverride] = useState<string | null>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,8 +33,8 @@ const App: React.FC = () => {
             ...prev,
             originalImage: img,
             processedImage: null, // Reset processed
-            fileName: file.name.split('.')[0],
-            isAnalysing: false
+            fileName: `rbr-photo-${Date.now()}`,
+            manualMaskPreview: false,
           }));
           setProcessedImageOverride(null);
         };
@@ -74,6 +74,10 @@ const App: React.FC = () => {
       setTriggerUndo(prev => prev + 1);
   };
 
+  const handleManualApply = () => {
+      setTriggerManualApply(prev => prev + 1);
+  };
+
   // Keyboard shortcut for Undo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -87,25 +91,8 @@ const App: React.FC = () => {
   }, []);
 
   const handleProcessedImageUpdate = useCallback((dataUrl: string) => {
-    setState(prev => {
-        // Only trigger Gemini analysis if we haven't yet and it's a fresh process
-        if (!prev.isAnalysing && !prev.aiSuggestedName && prev.originalImage) {
-            triggerGeminiAnalysis(dataUrl);
-            return { ...prev, processedImage: dataUrl, isAnalysing: true };
-        }
-        return { ...prev, processedImage: dataUrl };
-    });
+    setState(prev => ({ ...prev, processedImage: dataUrl }));
   }, []);
-
-  const triggerGeminiAnalysis = async (dataUrl: string) => {
-      const suggestedName = await analyzeImageForNaming(dataUrl);
-      setState(prev => ({
-          ...prev,
-          fileName: suggestedName,
-          aiSuggestedName: suggestedName,
-          isAnalysing: false
-      }));
-  };
 
   const handleDownload = () => {
     if (state.processedImage) {
@@ -136,9 +123,8 @@ const App: React.FC = () => {
                     ...prev,
                     originalImage: img,
                     processedImage: null,
-                    fileName: file.name.split('.')[0],
-                    isAnalysing: false,
-                    aiSuggestedName: null
+                    fileName: `rbr-photo-${Date.now()}`,
+                    manualMaskPreview: false,
                 }));
                 setProcessedImageOverride(null);
             };
@@ -239,6 +225,8 @@ const App: React.FC = () => {
             smoothing={state.smoothing}
             triggerAutoRemove={triggerAutoRemove}
             triggerUndo={triggerUndo}
+            triggerManualApply={triggerManualApply}
+            manualMaskPreview={state.manualMaskPreview}
             processedImageOverride={processedImageOverride}
             onProcessedImageUpdate={handleProcessedImageUpdate}
         />
@@ -249,9 +237,11 @@ const App: React.FC = () => {
             onAiRemove={handleAiRemove}
             onDownload={handleDownload}
             onUndo={handleUndo}
+            onManualApply={handleManualApply}
             onBrushSizeChange={(val) => setState(prev => ({...prev, brushSize: val}))}
             onToleranceChange={(val) => setState(prev => ({...prev, tolerance: val}))}
             onSmoothingChange={(val) => setState(prev => ({...prev, smoothing: val}))}
+            onManualMaskPreviewChange={(val) => setState(prev => ({...prev, manualMaskPreview: val}))}
             onUploadClick={() => setState(prev => ({ ...prev, originalImage: null }))}
         />
       </div>

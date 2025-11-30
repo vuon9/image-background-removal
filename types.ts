@@ -21,6 +21,5 @@ export interface AppState {
   brushSize: number;
   tolerance: number;
   smoothing: number; // 0-10
-  aiSuggestedName: string | null;
-  isAnalysing: boolean;
+  manualMaskPreview: boolean;
 }
