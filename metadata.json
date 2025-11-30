@@ -1,0 +1,5 @@
+{
+  "name": "BackgroundRemover Pro",
+  "description": "Smart background removal tool with manual refinement and Gemini-powered image analysis.",
+  "requestFramePermissions": []
+}
