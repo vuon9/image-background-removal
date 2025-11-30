@@ -10,7 +10,7 @@ const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
     originalImage: null,
     processedImage: null,
-    fileName: 'rbr-photo',
+    fileName: 'ibr-photo',
     isProcessing: false,
     brushSize: 30,
     tolerance: 15,
