@@ -129,7 +129,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                         </div>
                         <input
                             type="range"
-                            min="1"
+                            min="0"
                             max="100"
                             value={state.tolerance}
                             onChange={(e) => onToleranceChange(Number(e.target.value))}
